@@ -307,3 +307,582 @@ public enum TGuiTextWrapMode
 }
 
 #endregion Enums
+
+#region Style
+
+public enum TGuiStyleColor
+{
+    Border,
+    BorderFocused,
+    BorderPressed,
+    BorderDisabled,
+    Surface,
+    SurfaceFocused,
+    SurfacePressed,
+    SurfaceDisabled,
+    Text,
+    TextFocused,
+    TextPressed,
+    TextDisabled,
+    Line,
+    Background
+}
+
+public enum TGuiStyleVar
+{
+    BorderWidth,
+    TextPadding,
+    TextAlignment,
+    TextSize,
+    TextSpacing,
+    TextLineSpacing,
+    TextAlignmentVertical,
+    TextWrapMode,
+    PanelCornerRadius,
+    ToggleGroupPadding,
+    CheckboxCheckPadding,
+    DropdownButtonSpacing,
+    DropdownArrowPadding,
+    DropdownItemsSpacing,
+    DropdownArrowVisible,
+    DropdownRollUp,
+    TextBoxReadOnly,
+    SliderThumbWidth,
+    SliderPadding,
+    ProgressPadding,
+    ProgressSide,
+    ListItemHeight,
+    ListItemSpacing,
+    ListItemBorderVisible,
+    ListItemBorderWidth,
+    ScrollBarWidth,
+    ListViewScrollBarSide,
+    ScrollBarArrowSize,
+    ScrollBarArrowsVisible,
+    ScrollBarSliderPadding,
+    ScrollBarSliderSize,
+    ScrollBarPadding,
+    ScrollBarScrollSpeed,
+    SpinnerButtonWidth,
+    SpinnerButtonSpacing
+}
+
+// Themes based on Catppucin palettes
+// https://github.com/catppuccin/catppuccin
+// -----------------------------------------------------------------------------
+// MIT License
+//
+// Copyright (c) 2021 Catppuccin
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// -----------------------------------------------------------------------------
+public enum TGuiTheme
+{
+    Latte,
+    Frappe,
+    Macchiato,
+    Mocha,
+}
+
+internal static class TGuiLatteTheme
+{
+    public static void Apply(TGuiStyle style)
+    {
+        ArgumentNullException.ThrowIfNull(style);
+
+        ApplySharedDefaults(style);
+        ApplyControlDefaults(style);
+    }
+
+    private static void ApplySharedDefaults(TGuiStyle style)
+    {
+        style.SetColor(TGuiStyleColor.Border, new TGuiColor(156, 160, 176, 255));
+        style.SetColor(TGuiStyleColor.Surface, new TGuiColor(230, 233, 239, 255));
+        style.SetColor(TGuiStyleColor.Text, new TGuiColor(76, 79, 105, 255));
+        style.SetColor(TGuiStyleColor.BorderFocused, new TGuiColor(114, 135, 253, 255));
+        style.SetColor(TGuiStyleColor.SurfaceFocused, new TGuiColor(204, 208, 218, 255));
+        style.SetColor(TGuiStyleColor.TextFocused, new TGuiColor(114, 135, 253, 255));
+        style.SetColor(TGuiStyleColor.BorderPressed, new TGuiColor(30, 102, 245, 255));
+        style.SetColor(TGuiStyleColor.SurfacePressed, new TGuiColor(188, 192, 204, 255));
+        style.SetColor(TGuiStyleColor.TextPressed, new TGuiColor(30, 102, 245, 255));
+        style.SetColor(TGuiStyleColor.BorderDisabled, new TGuiColor(172, 176, 190, 255));
+        style.SetColor(TGuiStyleColor.SurfaceDisabled, new TGuiColor(239, 241, 245, 255));
+        style.SetColor(TGuiStyleColor.TextDisabled, new TGuiColor(108, 111, 133, 255));
+        style.SetColor(TGuiStyleColor.Line, new TGuiColor(140, 143, 161, 255));
+        style.SetColor(TGuiStyleColor.Background, new TGuiColor(239, 241, 245, 255));
+
+        style.SetVar(TGuiStyleVar.BorderWidth, 1);
+        style.SetVar(TGuiStyleVar.TextPadding, 0);
+        style.SetVar(TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Center);
+        style.SetVar(TGuiStyleVar.TextSize, TGuiStyle.DefaultTextSize);
+        style.SetVar(TGuiStyleVar.TextSpacing, 1);
+        style.SetVar(TGuiStyleVar.TextLineSpacing, 4);
+        style.SetVar(TGuiStyleVar.TextAlignmentVertical, (int)TGuiTextAlignmentVertical.Middle);
+        style.SetVar(TGuiStyleVar.PanelCornerRadius, 0);
+    }
+
+    private static void ApplyControlDefaults(TGuiStyle style)
+    {
+        style.SetVar(TGuiControl.Label, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+        style.SetVar(TGuiControl.Button, TGuiStyleVar.BorderWidth, 1);
+        style.SetVar(TGuiControl.Slider, TGuiStyleVar.TextPadding, 4);
+        style.SetVar(TGuiControl.ProgressBar, TGuiStyleVar.TextPadding, 4);
+        style.SetVar(TGuiControl.Checkbox, TGuiStyleVar.TextPadding, 6);
+        style.SetVar(TGuiControl.Checkbox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Right);
+        style.SetVar(TGuiControl.DropdownBox, TGuiStyleVar.TextPadding, 0);
+        style.SetVar(TGuiControl.DropdownBox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Center);
+        style.SetVar(TGuiStyleVar.DropdownArrowVisible, 1);
+        style.SetVar(TGuiControl.TextBox, TGuiStyleVar.TextPadding, 6);
+        style.SetVar(TGuiControl.TextBox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+        style.SetVar(TGuiControl.ValueBox, TGuiStyleVar.TextPadding, 6);
+        style.SetVar(TGuiControl.ValueBox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+        style.SetVar(TGuiControl.StatusBar, TGuiStyleVar.TextPadding, 8);
+        style.SetVar(TGuiControl.StatusBar, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+
+        style.SetVar(TGuiStyleVar.ToggleGroupPadding, 3);
+        style.SetVar(TGuiStyleVar.SliderThumbWidth, 18);
+        style.SetVar(TGuiStyleVar.SliderPadding, 2);
+        style.SetVar(TGuiStyleVar.ProgressPadding, 2);
+        style.SetVar(TGuiStyleVar.CheckboxCheckPadding, 2);
+        style.SetVar(TGuiStyleVar.DropdownButtonSpacing, 2);
+        style.SetVar(TGuiStyleVar.DropdownArrowPadding, 18);
+        style.SetVar(TGuiStyleVar.DropdownItemsSpacing, 2);
+        style.SetVar(TGuiStyleVar.SpinnerButtonWidth, 28);
+        style.SetVar(TGuiStyleVar.SpinnerButtonSpacing, 4);
+        style.SetVar(TGuiControl.ScrollBar, TGuiStyleVar.BorderWidth, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarArrowsVisible, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarArrowSize, 7);
+        style.SetVar(TGuiStyleVar.ScrollBarSliderPadding, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarSliderSize, 18);
+        style.SetVar(TGuiStyleVar.ScrollBarPadding, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarScrollSpeed, 12);
+        style.SetVar(TGuiStyleVar.ListItemHeight, 28);
+        style.SetVar(TGuiStyleVar.ListItemSpacing, 2);
+        style.SetVar(TGuiStyleVar.ListItemBorderWidth, 1);
+        style.SetVar(TGuiStyleVar.ScrollBarWidth, 12);
+        style.SetVar(TGuiStyleVar.ListViewScrollBarSide, (int)TGuiScrollBarSide.Right);
+    }
+}
+
+internal static class TGuiFrappeTheme
+{
+    public static void Apply(TGuiStyle style)
+    {
+        ArgumentNullException.ThrowIfNull(style);
+
+        ApplySharedDefaults(style);
+        ApplyControlDefaults(style);
+    }
+
+    private static void ApplySharedDefaults(TGuiStyle style)
+    {
+        style.SetColor(TGuiStyleColor.Border, new TGuiColor(115, 121, 148, 255));
+        style.SetColor(TGuiStyleColor.Surface, new TGuiColor(41, 44, 60, 255));
+        style.SetColor(TGuiStyleColor.Text, new TGuiColor(198, 208, 245, 255));
+        style.SetColor(TGuiStyleColor.BorderFocused, new TGuiColor(186, 187, 241, 255));
+        style.SetColor(TGuiStyleColor.SurfaceFocused, new TGuiColor(65, 69, 89, 255));
+        style.SetColor(TGuiStyleColor.TextFocused, new TGuiColor(186, 187, 241, 255));
+        style.SetColor(TGuiStyleColor.BorderPressed, new TGuiColor(140, 170, 238, 255));
+        style.SetColor(TGuiStyleColor.SurfacePressed, new TGuiColor(81, 87, 109, 255));
+        style.SetColor(TGuiStyleColor.TextPressed, new TGuiColor(140, 170, 238, 255));
+        style.SetColor(TGuiStyleColor.BorderDisabled, new TGuiColor(98, 104, 128, 255));
+        style.SetColor(TGuiStyleColor.SurfaceDisabled, new TGuiColor(48, 52, 70, 255));
+        style.SetColor(TGuiStyleColor.TextDisabled, new TGuiColor(165, 173, 206, 255));
+        style.SetColor(TGuiStyleColor.Line, new TGuiColor(131, 139, 167, 255));
+        style.SetColor(TGuiStyleColor.Background, new TGuiColor(48, 52, 70, 255));
+
+        style.SetVar(TGuiStyleVar.BorderWidth, 1);
+        style.SetVar(TGuiStyleVar.TextPadding, 0);
+        style.SetVar(TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Center);
+        style.SetVar(TGuiStyleVar.TextSize, TGuiStyle.DefaultTextSize);
+        style.SetVar(TGuiStyleVar.TextSpacing, 1);
+        style.SetVar(TGuiStyleVar.TextLineSpacing, 4);
+        style.SetVar(TGuiStyleVar.TextAlignmentVertical, (int)TGuiTextAlignmentVertical.Middle);
+        style.SetVar(TGuiStyleVar.PanelCornerRadius, 0);
+    }
+
+    private static void ApplyControlDefaults(TGuiStyle style)
+    {
+        style.SetVar(TGuiControl.Label, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+        style.SetVar(TGuiControl.Button, TGuiStyleVar.BorderWidth, 1);
+        style.SetVar(TGuiControl.Slider, TGuiStyleVar.TextPadding, 4);
+        style.SetVar(TGuiControl.ProgressBar, TGuiStyleVar.TextPadding, 4);
+        style.SetVar(TGuiControl.Checkbox, TGuiStyleVar.TextPadding, 6);
+        style.SetVar(TGuiControl.Checkbox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Right);
+        style.SetVar(TGuiControl.DropdownBox, TGuiStyleVar.TextPadding, 0);
+        style.SetVar(TGuiControl.DropdownBox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Center);
+        style.SetVar(TGuiStyleVar.DropdownArrowVisible, 1);
+        style.SetVar(TGuiControl.TextBox, TGuiStyleVar.TextPadding, 6);
+        style.SetVar(TGuiControl.TextBox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+        style.SetVar(TGuiControl.ValueBox, TGuiStyleVar.TextPadding, 6);
+        style.SetVar(TGuiControl.ValueBox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+        style.SetVar(TGuiControl.StatusBar, TGuiStyleVar.TextPadding, 8);
+        style.SetVar(TGuiControl.StatusBar, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+
+        style.SetVar(TGuiStyleVar.ToggleGroupPadding, 3);
+        style.SetVar(TGuiStyleVar.SliderThumbWidth, 18);
+        style.SetVar(TGuiStyleVar.SliderPadding, 2);
+        style.SetVar(TGuiStyleVar.ProgressPadding, 2);
+        style.SetVar(TGuiStyleVar.CheckboxCheckPadding, 2);
+        style.SetVar(TGuiStyleVar.DropdownButtonSpacing, 2);
+        style.SetVar(TGuiStyleVar.DropdownArrowPadding, 18);
+        style.SetVar(TGuiStyleVar.DropdownItemsSpacing, 2);
+        style.SetVar(TGuiStyleVar.SpinnerButtonWidth, 28);
+        style.SetVar(TGuiStyleVar.SpinnerButtonSpacing, 4);
+        style.SetVar(TGuiControl.ScrollBar, TGuiStyleVar.BorderWidth, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarArrowsVisible, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarArrowSize, 7);
+        style.SetVar(TGuiStyleVar.ScrollBarSliderPadding, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarSliderSize, 18);
+        style.SetVar(TGuiStyleVar.ScrollBarPadding, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarScrollSpeed, 12);
+        style.SetVar(TGuiStyleVar.ListItemHeight, 28);
+        style.SetVar(TGuiStyleVar.ListItemSpacing, 2);
+        style.SetVar(TGuiStyleVar.ListItemBorderWidth, 1);
+        style.SetVar(TGuiStyleVar.ScrollBarWidth, 12);
+        style.SetVar(TGuiStyleVar.ListViewScrollBarSide, (int)TGuiScrollBarSide.Right);
+    }
+}
+
+internal static class TGuiMacchiatoTheme
+{
+    public static void Apply(TGuiStyle style)
+    {
+        ArgumentNullException.ThrowIfNull(style);
+
+        ApplySharedDefaults(style);
+        ApplyControlDefaults(style);
+    }
+
+    private static void ApplySharedDefaults(TGuiStyle style)
+    {
+        style.SetColor(TGuiStyleColor.Border, new TGuiColor(110, 115, 141, 255));
+        style.SetColor(TGuiStyleColor.Surface, new TGuiColor(30, 32, 48, 255));
+        style.SetColor(TGuiStyleColor.Text, new TGuiColor(202, 211, 245, 255));
+        style.SetColor(TGuiStyleColor.BorderFocused, new TGuiColor(183, 189, 248, 255));
+        style.SetColor(TGuiStyleColor.SurfaceFocused, new TGuiColor(54, 58, 79, 255));
+        style.SetColor(TGuiStyleColor.TextFocused, new TGuiColor(183, 189, 248, 255));
+        style.SetColor(TGuiStyleColor.BorderPressed, new TGuiColor(138, 173, 244, 255));
+        style.SetColor(TGuiStyleColor.SurfacePressed, new TGuiColor(73, 77, 100, 255));
+        style.SetColor(TGuiStyleColor.TextPressed, new TGuiColor(138, 173, 244, 255));
+        style.SetColor(TGuiStyleColor.BorderDisabled, new TGuiColor(91, 96, 120, 255));
+        style.SetColor(TGuiStyleColor.SurfaceDisabled, new TGuiColor(36, 39, 58, 255));
+        style.SetColor(TGuiStyleColor.TextDisabled, new TGuiColor(165, 173, 203, 255));
+        style.SetColor(TGuiStyleColor.Line, new TGuiColor(128, 135, 162, 255));
+        style.SetColor(TGuiStyleColor.Background, new TGuiColor(36, 39, 58, 255));
+
+        style.SetVar(TGuiStyleVar.BorderWidth, 1);
+        style.SetVar(TGuiStyleVar.TextPadding, 0);
+        style.SetVar(TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Center);
+        style.SetVar(TGuiStyleVar.TextSize, TGuiStyle.DefaultTextSize);
+        style.SetVar(TGuiStyleVar.TextSpacing, 1);
+        style.SetVar(TGuiStyleVar.TextLineSpacing, 4);
+        style.SetVar(TGuiStyleVar.TextAlignmentVertical, (int)TGuiTextAlignmentVertical.Middle);
+        style.SetVar(TGuiStyleVar.PanelCornerRadius, 0);
+    }
+
+    private static void ApplyControlDefaults(TGuiStyle style)
+    {
+        style.SetVar(TGuiControl.Label, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+        style.SetVar(TGuiControl.Button, TGuiStyleVar.BorderWidth, 1);
+        style.SetVar(TGuiControl.Slider, TGuiStyleVar.TextPadding, 4);
+        style.SetVar(TGuiControl.ProgressBar, TGuiStyleVar.TextPadding, 4);
+        style.SetVar(TGuiControl.Checkbox, TGuiStyleVar.TextPadding, 6);
+        style.SetVar(TGuiControl.Checkbox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Right);
+        style.SetVar(TGuiControl.DropdownBox, TGuiStyleVar.TextPadding, 0);
+        style.SetVar(TGuiControl.DropdownBox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Center);
+        style.SetVar(TGuiStyleVar.DropdownArrowVisible, 1);
+        style.SetVar(TGuiControl.TextBox, TGuiStyleVar.TextPadding, 6);
+        style.SetVar(TGuiControl.TextBox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+        style.SetVar(TGuiControl.ValueBox, TGuiStyleVar.TextPadding, 6);
+        style.SetVar(TGuiControl.ValueBox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+        style.SetVar(TGuiControl.StatusBar, TGuiStyleVar.TextPadding, 8);
+        style.SetVar(TGuiControl.StatusBar, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+
+        style.SetVar(TGuiStyleVar.ToggleGroupPadding, 3);
+        style.SetVar(TGuiStyleVar.SliderThumbWidth, 18);
+        style.SetVar(TGuiStyleVar.SliderPadding, 2);
+        style.SetVar(TGuiStyleVar.ProgressPadding, 2);
+        style.SetVar(TGuiStyleVar.CheckboxCheckPadding, 2);
+        style.SetVar(TGuiStyleVar.DropdownButtonSpacing, 2);
+        style.SetVar(TGuiStyleVar.DropdownArrowPadding, 18);
+        style.SetVar(TGuiStyleVar.DropdownItemsSpacing, 2);
+        style.SetVar(TGuiStyleVar.SpinnerButtonWidth, 28);
+        style.SetVar(TGuiStyleVar.SpinnerButtonSpacing, 4);
+        style.SetVar(TGuiControl.ScrollBar, TGuiStyleVar.BorderWidth, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarArrowsVisible, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarArrowSize, 7);
+        style.SetVar(TGuiStyleVar.ScrollBarSliderPadding, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarSliderSize, 18);
+        style.SetVar(TGuiStyleVar.ScrollBarPadding, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarScrollSpeed, 12);
+        style.SetVar(TGuiStyleVar.ListItemHeight, 28);
+        style.SetVar(TGuiStyleVar.ListItemSpacing, 2);
+        style.SetVar(TGuiStyleVar.ListItemBorderWidth, 1);
+        style.SetVar(TGuiStyleVar.ScrollBarWidth, 12);
+        style.SetVar(TGuiStyleVar.ListViewScrollBarSide, (int)TGuiScrollBarSide.Right);
+    }
+}
+
+internal static class TGuiMochaTheme
+{
+    public static void Apply(TGuiStyle style)
+    {
+        ArgumentNullException.ThrowIfNull(style);
+
+        ApplySharedDefaults(style);
+        ApplyControlDefaults(style);
+    }
+
+    private static void ApplySharedDefaults(TGuiStyle style)
+    {
+        style.SetColor(TGuiStyleColor.Border, new TGuiColor(108, 112, 134, 255));
+        style.SetColor(TGuiStyleColor.Surface, new TGuiColor(24, 24, 37, 255));
+        style.SetColor(TGuiStyleColor.Text, new TGuiColor(205, 214, 244, 255));
+        style.SetColor(TGuiStyleColor.BorderFocused, new TGuiColor(180, 190, 254, 255));
+        style.SetColor(TGuiStyleColor.SurfaceFocused, new TGuiColor(49, 50, 68, 255));
+        style.SetColor(TGuiStyleColor.TextFocused, new TGuiColor(180, 190, 254, 255));
+        style.SetColor(TGuiStyleColor.BorderPressed, new TGuiColor(137, 180, 250, 255));
+        style.SetColor(TGuiStyleColor.SurfacePressed, new TGuiColor(69, 71, 90, 255));
+        style.SetColor(TGuiStyleColor.TextPressed, new TGuiColor(137, 180, 250, 255));
+        style.SetColor(TGuiStyleColor.BorderDisabled, new TGuiColor(88, 91, 112, 255));
+        style.SetColor(TGuiStyleColor.SurfaceDisabled, new TGuiColor(30, 30, 46, 255));
+        style.SetColor(TGuiStyleColor.TextDisabled, new TGuiColor(166, 173, 200, 255));
+        style.SetColor(TGuiStyleColor.Line, new TGuiColor(127, 132, 156, 255));
+        style.SetColor(TGuiStyleColor.Background, new TGuiColor(30, 30, 46, 255));
+
+        style.SetVar(TGuiStyleVar.BorderWidth, 1);
+        style.SetVar(TGuiStyleVar.TextPadding, 0);
+        style.SetVar(TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Center);
+        style.SetVar(TGuiStyleVar.TextSize, TGuiStyle.DefaultTextSize);
+        style.SetVar(TGuiStyleVar.TextSpacing, 1);
+        style.SetVar(TGuiStyleVar.TextLineSpacing, 4);
+        style.SetVar(TGuiStyleVar.TextAlignmentVertical, (int)TGuiTextAlignmentVertical.Middle);
+        style.SetVar(TGuiStyleVar.PanelCornerRadius, 0);
+    }
+
+    private static void ApplyControlDefaults(TGuiStyle style)
+    {
+        style.SetVar(TGuiControl.Label, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+        style.SetVar(TGuiControl.Button, TGuiStyleVar.BorderWidth, 1);
+        style.SetVar(TGuiControl.Slider, TGuiStyleVar.TextPadding, 4);
+        style.SetVar(TGuiControl.ProgressBar, TGuiStyleVar.TextPadding, 4);
+        style.SetVar(TGuiControl.Checkbox, TGuiStyleVar.TextPadding, 6);
+        style.SetVar(TGuiControl.Checkbox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Right);
+        style.SetVar(TGuiControl.DropdownBox, TGuiStyleVar.TextPadding, 0);
+        style.SetVar(TGuiControl.DropdownBox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Center);
+        style.SetVar(TGuiStyleVar.DropdownArrowVisible, 1);
+        style.SetVar(TGuiControl.TextBox, TGuiStyleVar.TextPadding, 6);
+        style.SetVar(TGuiControl.TextBox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+        style.SetVar(TGuiControl.ValueBox, TGuiStyleVar.TextPadding, 6);
+        style.SetVar(TGuiControl.ValueBox, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+        style.SetVar(TGuiControl.StatusBar, TGuiStyleVar.TextPadding, 8);
+        style.SetVar(TGuiControl.StatusBar, TGuiStyleVar.TextAlignment, (int)TGuiTextAlignment.Left);
+
+        style.SetVar(TGuiStyleVar.ToggleGroupPadding, 3);
+        style.SetVar(TGuiStyleVar.SliderThumbWidth, 18);
+        style.SetVar(TGuiStyleVar.SliderPadding, 2);
+        style.SetVar(TGuiStyleVar.ProgressPadding, 2);
+        style.SetVar(TGuiStyleVar.CheckboxCheckPadding, 2);
+        style.SetVar(TGuiStyleVar.DropdownButtonSpacing, 2);
+        style.SetVar(TGuiStyleVar.DropdownArrowPadding, 18);
+        style.SetVar(TGuiStyleVar.DropdownItemsSpacing, 2);
+        style.SetVar(TGuiStyleVar.SpinnerButtonWidth, 28);
+        style.SetVar(TGuiStyleVar.SpinnerButtonSpacing, 4);
+        style.SetVar(TGuiControl.ScrollBar, TGuiStyleVar.BorderWidth, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarArrowsVisible, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarArrowSize, 7);
+        style.SetVar(TGuiStyleVar.ScrollBarSliderPadding, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarSliderSize, 18);
+        style.SetVar(TGuiStyleVar.ScrollBarPadding, 0);
+        style.SetVar(TGuiStyleVar.ScrollBarScrollSpeed, 12);
+        style.SetVar(TGuiStyleVar.ListItemHeight, 28);
+        style.SetVar(TGuiStyleVar.ListItemSpacing, 2);
+        style.SetVar(TGuiStyleVar.ListItemBorderWidth, 1);
+        style.SetVar(TGuiStyleVar.ScrollBarWidth, 12);
+        style.SetVar(TGuiStyleVar.ListViewScrollBarSide, (int)TGuiScrollBarSide.Right);
+    }
+}
+
+public sealed class TGuiStyle
+{
+    internal const int DefaultTextSize = 12;
+
+    private static readonly int s_controlCount = Enum.GetValues<TGuiControl>().Length;
+    private static readonly int s_colorCount = Enum.GetValues<TGuiStyleColor>().Length;
+    private static readonly int s_varCount = Enum.GetValues<TGuiStyleVar>().Length;
+
+    private readonly int[] _sharedColors = new int[s_colorCount];
+    private readonly int[] _sharedVars = new int[s_varCount];
+    private readonly int[] _controlColorOverrides = new int[s_controlCount * s_colorCount];
+    private readonly int[] _controlVarOverrides = new int[s_controlCount * s_varCount];
+    private readonly bool[] _hasControlColorOverride = new bool[s_controlCount * s_colorCount];
+    private readonly bool[] _hasControlVarOverride = new bool[s_controlCount * s_varCount];
+    private bool _isLoaded;
+
+    public void SetColor(TGuiStyleColor color, TGuiColor value)
+    {
+        EnsureLoaded();
+        _sharedColors[(int)color] = value.ToPackedRgba();
+    }
+
+    public void SetColor(TGuiControl control, TGuiStyleColor color, TGuiColor value)
+    {
+        EnsureLoaded();
+
+        if (control == TGuiControl.Default)
+        {
+            SetColor(color, value);
+            return;
+        }
+
+        int index = GetControlColorIndex(control, color);
+        _controlColorOverrides[index] = value.ToPackedRgba();
+        _hasControlColorOverride[index] = true;
+    }
+
+    public TGuiColor GetColor(TGuiStyleColor color)
+    {
+        EnsureLoaded();
+        return TGuiColor.FromPackedRgba(_sharedColors[(int)color]);
+    }
+
+    public TGuiColor GetColor(TGuiControl control, TGuiStyleColor color)
+    {
+        EnsureLoaded();
+
+        if (control != TGuiControl.Default)
+        {
+            int index = GetControlColorIndex(control, color);
+            if (_hasControlColorOverride[index])
+            {
+                return TGuiColor.FromPackedRgba(_controlColorOverrides[index]);
+            }
+        }
+
+        return TGuiColor.FromPackedRgba(_sharedColors[(int)color]);
+    }
+
+    public void SetVar(TGuiStyleVar styleVar, int value)
+    {
+        EnsureLoaded();
+        _sharedVars[(int)styleVar] = value;
+    }
+
+    public void SetVar(TGuiControl control, TGuiStyleVar styleVar, int value)
+    {
+        EnsureLoaded();
+
+        if (control == TGuiControl.Default)
+        {
+            SetVar(styleVar, value);
+            return;
+        }
+
+        int index = GetControlVarIndex(control, styleVar);
+        _controlVarOverrides[index] = value;
+        _hasControlVarOverride[index] = true;
+    }
+
+    public int GetVar(TGuiStyleVar styleVar)
+    {
+        EnsureLoaded();
+        return _sharedVars[(int)styleVar];
+    }
+
+    public int GetVar(TGuiControl control, TGuiStyleVar styleVar)
+    {
+        EnsureLoaded();
+
+        if (control != TGuiControl.Default)
+        {
+            int index = GetControlVarIndex(control, styleVar);
+            if (_hasControlVarOverride[index])
+            {
+                return _controlVarOverrides[index];
+            }
+        }
+
+        return _sharedVars[(int)styleVar];
+    }
+
+    public void LoadDefault()
+    {
+        LoadTheme(TGuiTheme.Mocha);
+    }
+
+    public void LoadTheme(TGuiTheme theme)
+    {
+        _isLoaded = true;
+        Reset();
+        switch(theme)
+        {
+            case TGuiTheme.Latte:
+                TGuiLatteTheme.Apply(this);
+                return;
+
+            case TGuiTheme.Frappe:
+                TGuiFrappeTheme.Apply(this);
+                return;
+
+            case TGuiTheme.Macchiato:
+                TGuiMacchiatoTheme.Apply(this);
+                return;
+
+            case TGuiTheme.Mocha:
+                TGuiMochaTheme.Apply(this);
+                return;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(theme), theme, "The theme value is not supported.");
+        }
+    }
+
+    private void EnsureLoaded()
+    {
+        if (!_isLoaded)
+        {
+            LoadDefault();
+        }
+    }
+
+    private static int GetControlColorIndex(TGuiControl control, TGuiStyleColor color)
+    {
+        return (((int)control) * s_colorCount) + (int)color;
+    }
+
+    private static int GetControlVarIndex(TGuiControl control, TGuiStyleVar styleVar)
+    {
+        return (((int)control) * s_varCount) + (int)styleVar;
+    }
+
+    private void Reset()
+    {
+        Array.Clear(_sharedColors, 0, _sharedColors.Length);
+        Array.Clear(_sharedVars, 0, _sharedVars.Length);
+        Array.Clear(_controlColorOverrides, 0, _controlColorOverrides.Length);
+        Array.Clear(_controlVarOverrides, 0, _controlVarOverrides.Length);
+        Array.Clear(_hasControlColorOverride, 0, _hasControlColorOverride.Length);
+        Array.Clear(_hasControlVarOverride, 0, _hasControlVarOverride.Length);
+    }
+
+
+}
+
+#endregion Style
