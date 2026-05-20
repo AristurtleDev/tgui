@@ -251,3 +251,59 @@ public enum TGuiMouseButton
 }
 
 #endregion Input
+
+#region Enums
+
+public enum TGuiControl
+{
+    Default,
+    Label,
+    Button,
+    Toggle,
+    Slider,
+    ProgressBar,
+    Checkbox,
+    DropdownBox,
+    TextBox,
+    ValueBox,
+    ListView,
+    ScrollBar,
+    StatusBar
+}
+
+public enum TGuiControlState
+{
+    Normal,
+    Focused,
+    Pressed,
+    Disabled
+}
+
+public enum TGuiScrollBarSide
+{
+    Left,
+    Right
+}
+
+public enum TGuiTextAlignment
+{
+    Left,
+    Center,
+    Right
+}
+
+public enum TGuiTextAlignmentVertical
+{
+    Top,
+    Middle,
+    Bottom
+}
+
+public enum TGuiTextWrapMode
+{
+    None,
+    Char,
+    Word
+}
+
+#endregion Enums
