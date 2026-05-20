@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/examples/">
+    <Project Path="examples/TGui.Example.MonoGame/TGui.Example.MonoGame.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/TGui.Backend.MonoGame/TGui.Backend.MonoGame.csproj" />
+    <Project Path="src/TGui/TGui.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <SolutionDirectory>$(MSBuildThisFileDirectory)</SolutionDirectory>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Version>0.0.1</Version>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Authors>Christopher Whitley (AristurtleDev)</Authors>
+        <PackageProjectUrl>https://github.com/aristurtledev/tgui</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/aristurtledev/tgui</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryBranch>develop</RepositoryBranch>
+        <NeutralLanguage>en</NeutralLanguage>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="$(SolutionDirectory)README.md" Pack="true" PackagePath="" />
+    </ItemGroup>
+
+</Project>
