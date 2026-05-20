@@ -217,3 +217,37 @@ public readonly struct TGuiCornerRadius : IEquatable<TGuiCornerRadius>
 }
 
 #endregion Primitives
+
+#region Input
+
+public enum TGuiKey
+{
+    Backspace,
+    Enter,
+    KeyPadEnter,
+    RightArrow,
+    LeftArrow,
+    Down,
+    Up,
+    Delete,
+    Home,
+    End,
+    LeftControl,
+    RightControl,
+    LeftShift,
+    Minus,
+    V,
+    C,
+    X,
+}
+
+public enum TGuiMouseButton
+{
+    Left,
+    Middle,
+    Right,
+    XButton1,
+    XButton2
+}
+
+#endregion Input
