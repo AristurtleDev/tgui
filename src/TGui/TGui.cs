@@ -3,8 +3,16 @@
 // See LICENSE file in the project root for full license information.
 
 using System;
+using System.CodeDom.Compiler;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.IO.Pipelines;
+using System.Linq.Expressions;
 using System.Numerics;
+using System.Text;
+using System.Text.Unicode;
+using StbTrueTypeSharp;
 
 namespace TGui;
 
@@ -831,7 +839,7 @@ public sealed class TGuiStyle
     {
         _isLoaded = true;
         Reset();
-        switch(theme)
+        switch (theme)
         {
             case TGuiTheme.Latte:
                 TGuiLatteTheme.Apply(this);
@@ -886,3 +894,645 @@ public sealed class TGuiStyle
 }
 
 #endregion Style
+
+#region Text
+
+public static class TGuiTextParsing
+{
+    public static bool TryParseInt32Loose(ReadOnlySpan<char> text, out int value)
+    {
+        value = 0;
+
+        if (text.IsEmpty)
+        {
+            return false;
+        }
+
+        int sign = 1;
+        int index = 0;
+
+        if (text[0] == '+' || text[0] == '-')
+        {
+            if (text[0] == '-')
+            {
+                sign = -1;
+            }
+
+            index++;
+        }
+
+        if ((index >= text.Length) || (text[index] < '0') || (text[index] > '9'))
+        {
+            return false;
+        }
+
+        int result = 0;
+
+        for (; index < text.Length; index++)
+        {
+            char c = text[index];
+
+            if ((c < '0') || (c > '9'))
+            {
+                break;
+            }
+
+            checked
+            {
+                result = (result * 10) + (c - '0');
+            }
+        }
+
+        value = result * sign;
+        return true;
+    }
+
+    public static bool TryParseSingleLoose(ReadOnlySpan<char> text, out float value)
+    {
+        value = 0.0f;
+
+        if (text.IsEmpty)
+        {
+            return false;
+        }
+
+        float sign = 1.0f;
+        int index = 0;
+
+        char c = text[0];
+
+        if (c == '+' || c == '-')
+        {
+            if (c == '-')
+            {
+                sign = -1.0f;
+            }
+
+            index++;
+
+            if (index >= text.Length)
+            {
+                return false;
+            }
+        }
+
+        float result = 0.0f;
+        bool hasDigits = false;
+
+        while (index < text.Length)
+        {
+            c = text[index];
+
+            if ((c < '0') || (c > '9'))
+            {
+                break;
+            }
+
+            result = (result * 10.0f) + (c - '0');
+            hasDigits = true;
+            index++;
+        }
+
+        if ((index < text.Length) && (text[index] == '.'))
+        {
+            index++;
+
+            float scale = 0.1f;
+
+            while (index < text.Length)
+            {
+                c = text[index];
+
+                if ((c < '0') || (c > '9'))
+                {
+                    break;
+                }
+
+                result += (c - '0') * scale;
+                scale *= 0.1f;
+                hasDigits = true;
+                index++;
+            }
+        }
+
+        if (!hasDigits)
+        {
+            return false;
+        }
+
+        value = result * sign;
+        return true;
+    }
+
+    public static string[] SplitRows(ReadOnlySpan<char> text, char delimiter, out int[] textRows)
+    {
+        if (text.IsEmpty)
+        {
+            textRows = Array.Empty<int>();
+            return Array.Empty<string>();
+        }
+
+        List<string> items = new List<string>();
+        List<int> rows = new List<int>();
+
+        int currentRow = 0;
+        int start = 0;
+
+        for (int index = 0; index < text.Length; index++)
+        {
+            char character = text[index];
+
+            if ((character != delimiter) && (character != '\n'))
+            {
+                continue;
+            }
+
+            items.Add(text.Slice(start, index - start).ToString());
+            rows.Add(currentRow);
+
+            start = index + 1;
+
+            if (character == '\n') { currentRow++; }
+        }
+
+        items.Add(text.Slice(start).ToString());
+        rows.Add(currentRow);
+
+        textRows = rows.ToArray();
+        return items.ToArray();
+    }
+}
+
+public sealed class TGuiTextBuffer
+{
+    private readonly byte[] _data;
+
+    public int Capacity => _data.Length + 1;
+    public int Length { get; private set; }
+    public byte this[int index] => _data[index];
+    public ReadOnlySpan<byte> PayloadSpan => _data.AsSpan(0, Length);
+
+    public TGuiTextBuffer(int capacity)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(capacity);
+        _data = new byte[capacity + 1];
+    }
+
+    public TGuiTextBuffer(string initial, int capacity)
+    {
+        ArgumentNullException.ThrowIfNull(initial);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(capacity);
+
+        int encodedLength = Encoding.UTF8.GetByteCount(initial);
+        int actualCapacity = Math.Max(capacity, encodedLength);
+
+        _data = new byte[actualCapacity + 1];
+        Length = Encoding.UTF8.GetBytes(initial, 0, initial.Length, _data, 0);
+        _data[Length] = 0;
+    }
+
+    internal void SetLength(int length)
+    {
+        Length = length;
+        _data[Length] = 0;
+    }
+
+    internal void SetByte(int index, byte value)
+    {
+        _data[index] = value;
+    }
+
+    public void SetString(ReadOnlySpan<char> text)
+    {
+        int byteCount = Encoding.UTF8.GetByteCount(text);
+
+        if (byteCount > Capacity)
+        {
+            byteCount = Capacity;
+        }
+
+        int written = 0;
+        Encoder encoder = Encoding.UTF8.GetEncoder();
+        encoder.Convert(text, _data.AsSpan(0, byteCount), true, out int _, out written, out bool _);
+        SetLength(written);
+    }
+
+    public override string ToString() => Encoding.UTF8.GetString(_data, 0, Length);
+}
+
+public static class TGuiUtf8
+{
+    private const int InvalidCodePoint = 0x3F;
+
+    private const int Utf8MaxOneByteCodePoint = 0x7F;
+    private const int Utf8MaxTwoByteCodePoint = 0x7FF;
+    private const int Utf8MaxThreeByteCodePoint = 0xFFFF;
+    private const int Utf8MaxFourByteCodePoint = 0x10FFFF;
+
+    private const byte Utf8AsciiMask = 0b1000_0000;
+
+    private const byte Utf8ContinuationMask = 0b1100_0000;
+    private const byte Utf8ContinuationPattern = 0b1000_0000;
+    private const byte Utf8ContinuationValueMask = 0b0011_1111;
+
+    private const byte Utf8TwoByteMask = 0b1110_0000;
+    private const byte Utf8TwoBytePattern = 0b1100_0000;
+
+    private const byte Utf8ThreeByteMask = 0b1111_0000;
+    private const byte Utf8ThreeBytePattern = 0b1110_0000;
+
+    private const byte Utf8FourByteMask = 0b1111_1000;
+    private const byte Utf8FourBytePattern = 0b1111_0000;
+
+    private const byte Utf8TwoByteValueMask = 0b0001_1111;
+    private const byte Utf8ThreeByteValueMask = 0b0000_1111;
+
+    private const byte Utf8FourByteValueMask = 0b0000_0111;
+
+    public static int GetCodepointNext(ReadOnlySpan<byte> text, int offset, out int codePointSize)
+    {
+        codePointSize = 1;
+        int codePoint = InvalidCodePoint;
+
+        // Ensure the starting offset is within the buffer
+        if ((uint)offset >= (uint)text.Length) { return codePoint; }
+
+        byte b0 = text[offset];
+
+        // 4-byte UTF-8 sequence: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+        if ((b0 & Utf8FourByteMask) == Utf8FourBytePattern)
+        {
+            if (offset + 3 >= text.Length) { return codePoint; }
+
+            // All following bytes must be UTF-8 continuation bytes: 10xxxxxx
+            byte b1 = text[offset + 1];
+            byte b2 = text[offset + 2];
+            byte b3 = text[offset + 3];
+
+            if (((b1 & Utf8ContinuationMask) ^ Utf8ContinuationPattern) != 0 ||
+                ((b2 & Utf8ContinuationMask) ^ Utf8ContinuationPattern) != 0 ||
+                ((b3 & Utf8ContinuationMask) ^ Utf8ContinuationPattern) != 0)
+            {
+                return codePoint;
+            }
+
+            // Reconstruct the Unicode code point from the UTF-8 payload bits
+            codePoint = ((b0 & Utf8FourByteValueMask) << 18) |
+                        ((b1 & Utf8ContinuationValueMask) << 12) |
+                        ((b2 & Utf8ContinuationValueMask) << 6) |
+                        (b3 & Utf8ContinuationValueMask);
+
+            codePointSize = 4;
+        }
+        else if ((b0 & Utf8ThreeByteMask) == Utf8ThreeBytePattern)
+        {
+            if (offset + 2 >= text.Length)
+            {
+                return codePoint;
+            }
+
+            // All following bytes must be UTF-8 continuation bytes: 10xxxxxx
+            byte b1 = text[offset + 1];
+            byte b2 = text[offset + 2];
+
+            if (((b1 & Utf8ContinuationMask) ^ Utf8ContinuationPattern) != 0 ||
+                ((b2 & Utf8ContinuationMask) ^ Utf8ContinuationPattern) != 0)
+            {
+                return codePoint;
+            }
+
+            codePoint = ((b0 & Utf8ThreeByteValueMask) << 12) |
+                        ((b1 & Utf8ContinuationValueMask) << 6) |
+                        (b2 & Utf8ContinuationValueMask);
+
+            codePointSize = 3;
+        }
+
+        // 2-byte UTF-8 sequence: 110xxxxx 10xxxxxx
+        else if ((b0 & Utf8TwoByteMask) == Utf8TwoBytePattern)
+        {
+            if (offset + 1 >= text.Length)
+            {
+                return codePoint;
+            }
+
+            // All following bytes must be UTF-8 continuation bytes: 10xxxxxx
+            byte b1 = text[offset + 1];
+
+            if (((b1 & Utf8ContinuationMask) ^ Utf8ContinuationPattern) != 0)
+            {
+                return codePoint;
+            }
+
+            codePoint = ((b0 & Utf8TwoByteValueMask) << 6) |
+                        (b1 & Utf8ContinuationValueMask);
+
+            codePointSize = 2;
+        }
+
+        // Single-byte ASCII character: 0xxxxxxx
+        else if ((b0 & Utf8AsciiMask) == 0)
+        {
+            codePoint = b0;
+            codePointSize = 1;
+        }
+
+        return codePoint;
+    }
+
+    public static int GetCodepointPrevious(ReadOnlySpan<byte> text, int offset, out int codePointSize)
+    {
+        codePointSize = 1;
+        int codePoint = InvalidCodePoint;
+
+        // Cannot move backward from the start of the buffer
+        if (offset <= 0) { return codePoint; }
+
+        int index = offset - 1;
+        int bytesBack = 0;
+
+        // Walk backwards across UTF-8 continuation bytes: 10xxxxxx
+        while (index >= 0 && bytesBack < 4 &&
+             (text[index] & Utf8ContinuationMask) == Utf8ContinuationPattern)
+        {
+            index--;
+            bytesBack++;
+        }
+
+        if (index < 0) { return codePoint; }
+
+        // Decode the code point starting from the detected lead byte
+        return GetCodepointNext(text, index, out codePointSize);
+
+
+    }
+
+    public static byte[] CodepointToUtf8(int codePoint, out int byteSize)
+    {
+        byte[] buffer = new byte[4];
+
+        // ASCII character: 0xxxxxxx
+        if (codePoint <= Utf8MaxOneByteCodePoint)
+        {
+            buffer[0] = (byte)codePoint;
+            byteSize = 1;
+        }
+        // 2-byte UTF-8 sequence: 110xxxxx 10xxxxxx
+        else if (codePoint <= Utf8MaxTwoByteCodePoint)
+        {
+            buffer[0] = (byte)(((codePoint >> 6) & Utf8TwoByteValueMask) | Utf8TwoBytePattern);
+            buffer[1] = (byte)((codePoint & Utf8ContinuationMask) | Utf8ContinuationPattern);
+            byteSize = 2;
+        }
+        // 3-byte UTF-8 sequence: 1110xxxx 10xxxxxx 10xxxxxx
+        else if (codePoint <= Utf8MaxThreeByteCodePoint)
+        {
+            buffer[0] = (byte)(((codePoint >> 12) & Utf8ThreeByteValueMask) | Utf8ThreeBytePattern);
+            buffer[1] = (byte)(((codePoint >> 6) & Utf8ContinuationValueMask) | Utf8ContinuationPattern);
+            buffer[2] = (byte)((codePoint & Utf8ContinuationValueMask) | Utf8ContinuationPattern);
+            byteSize = 3;
+        }
+        // 4-byte UTF-8 sequence: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+        else if (codePoint <= Utf8MaxFourByteCodePoint)
+        {
+            buffer[0] = (byte)(((codePoint >> 18) & Utf8FourByteValueMask) | Utf8FourBytePattern);
+            buffer[1] = (byte)(((codePoint >> 12) & Utf8ContinuationValueMask) | Utf8ContinuationPattern);
+            buffer[2] = (byte)(((codePoint >> 6) & Utf8ContinuationValueMask) | Utf8ContinuationPattern);
+            buffer[3] = (byte)((codePoint & Utf8ContinuationValueMask) | Utf8ContinuationPattern);
+            byteSize = 4;
+        }
+        else
+        {
+            byteSize = 0;
+        }
+
+        return buffer;
+    }
+
+}
+
+public readonly struct TGuiCodePointRange
+{
+    public readonly int Start;
+    public readonly int End;
+
+    public TGuiCodePointRange(int start, int end)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(start);
+        ArgumentOutOfRangeException.ThrowIfNegative(end);
+        Start = start;
+        End = end;
+    }
+}
+
+public readonly struct TGuiGlyphInfo : IEquatable<TGuiGlyphInfo>
+{
+    public readonly int Value;
+    public readonly int OffsetX;
+    public readonly int OffsetY;
+    public readonly int AdvanceX;
+
+    public TGuiGlyphInfo(int value, int offsetX, int offsetY, int advanceX) =>
+        (Value, OffsetX, OffsetY, AdvanceX) = (value, offsetX, offsetY, advanceX);
+
+    public bool Equals(TGuiGlyphInfo other) => Value == other.Value &&
+                                               OffsetX == other.OffsetX &&
+                                               OffsetY == other.OffsetY &&
+                                               AdvanceX == other.AdvanceX;
+
+    public override bool Equals([NotNullWhen(true)] object? obj) => obj is TGuiGlyphInfo other && Equals(other);
+    public override int GetHashCode() => HashCode.Combine(Value, OffsetX, OffsetY, AdvanceX);
+    public override string ToString() =>
+        $"(Value:{Value}, OffsetX:{OffsetX}, OffsetY:{OffsetY}, AdvanceX:{AdvanceX})";
+
+    public static bool operator ==(TGuiGlyphInfo left, TGuiGlyphInfo right) => left.Equals(right);
+    public static bool operator !=(TGuiGlyphInfo left, TGuiGlyphInfo right) => !left.Equals(right);
+}
+
+public sealed class TGuiFont
+{
+    public int BaseSize { get; set; }
+    public int GlyphCount { get; set; }
+    public int GlyphPadding { get; set; }
+    public TGuiTexture Texture { get; set; }
+    public TGuiRectangle[] Recs { get; set; } = [];
+    public TGuiGlyphInfo[] Glyphs { get; set; } = [];
+}
+
+public sealed class TGuiFontAtlasOptions
+{
+    public const float DEFAULT_PIXEL_HEIGHT = 12.0f;
+    public const int DEFAULT_GLYPH_PADDING = 1;
+
+    public float PixelHeight { get; }
+    public int GlyphPadding { get; }
+    public IReadOnlyList<TGuiCodePointRange>? CodePointRanges { get; }
+
+    public TGuiFontAtlasOptions() : this(DEFAULT_PIXEL_HEIGHT, DEFAULT_GLYPH_PADDING, null) { }
+    public TGuiFontAtlasOptions(float pixelHeight, int glyphPadding, IReadOnlyList<TGuiCodePointRange>? codePointRanges)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(pixelHeight);
+        ArgumentOutOfRangeException.ThrowIfNegative(glyphPadding);
+        
+        PixelHeight = pixelHeight;
+        GlyphPadding = glyphPadding;
+        CodePointRanges = codePointRanges;
+    }
+}
+
+public sealed class TGuiFontAtlas
+{
+    private const int BASIC_LATIN_START = 32;
+    private const int BASIC_LATIN_END = 126;
+    private const int LATIN1_SUPPLEMENT_START = 160;
+    private const int LATIN1_SUPPLEMENT_END = 255;
+
+    public int BaseSize { get; }
+    public int GlyphPadding { get; }
+    public int AtlasWidth { get; }
+    public int AtlasHeight { get; }
+    public byte[] AlphaPixels { get; }
+    public TGuiRectangle[] Recs { get; }
+    public TGuiGlyphInfo[] Glyphs { get; }
+    public int GlyphCount => Glyphs.Length;
+    public IReadOnlyDictionary<int, int> GlyphIndices { get; }
+
+    public TGuiFontAtlas(int baseSize, int glyphPadding, int atlasWidth, int atlasHeight, byte[] alphaPixels, TGuiRectangle[] recs, TGuiGlyphInfo[] glyphs, IReadOnlyDictionary<int, int> glyphIndices)
+    {
+        ArgumentNullException.ThrowIfNull(alphaPixels);
+        ArgumentNullException.ThrowIfNull(recs);
+        ArgumentNullException.ThrowIfNull(glyphs);
+        ArgumentNullException.ThrowIfNull(glyphIndices);
+
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(baseSize);
+        ArgumentOutOfRangeException.ThrowIfNegative(glyphPadding);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(atlasWidth);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(atlasHeight);
+
+        int expectedPixelCount = checked(atlasWidth * atlasHeight);
+        if (alphaPixels.Length != expectedPixelCount)
+        {
+            throw new ArgumentException("The alpha pixel data lengt hmust match the atlas area", nameof(alphaPixels));
+        }
+
+        BaseSize = baseSize;
+        GlyphPadding = glyphPadding;
+        AtlasWidth = atlasWidth;
+        AtlasHeight = atlasHeight;
+        AlphaPixels = alphaPixels;
+        Recs = recs;
+        Glyphs = glyphs;
+        GlyphIndices = glyphIndices;
+    }
+
+    public static TGuiFontAtlas Create(Stream fontStream, TGuiFontAtlasOptions options, int atlasWidth, int atlasHeight)
+    {
+        ArgumentNullException.ThrowIfNull(fontStream);
+        ArgumentNullException.ThrowIfNull(options);
+
+        if(!fontStream.CanRead)
+        {
+            throw new ArgumentException("The font stream must support reading", nameof(fontStream));
+        }
+
+        using MemoryStream memoryStream = new MemoryStream();
+        fontStream.CopyTo(memoryStream);
+        return Create(memoryStream.ToArray(), options, atlasWidth, atlasHeight);
+    }
+
+    public unsafe static TGuiFontAtlas Create(byte[] fontData, TGuiFontAtlasOptions options, int atlasWidth, int atlasHeight)
+    {
+        ArgumentNullException.ThrowIfNull(fontData);
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(atlasWidth);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(atlasHeight);
+
+        StbTrueType.stbtt_fontinfo? fontInfo = StbTrueType.CreateFont(fontData, 0);
+        if(fontInfo is null)
+        {
+            throw new InvalidOperationException("The font data could not be parsed");
+        }
+
+        try
+        {
+            byte[] alphaPixels = new byte[checked(atlasWidth * atlasHeight)];
+            List<TGuiRectangle> glyphRects = new  List<TGuiRectangle>();
+            List<TGuiGlyphInfo> glyphInfos = new List<TGuiGlyphInfo>();
+            Dictionary<int, int> glyphIndices = new Dictionary<int, int>();
+
+            StbTrueType.stbtt_pack_context packContext = new StbTrueType.stbtt_pack_context();
+
+            fixed(byte* pixelsPtr = alphaPixels)
+            {
+                int packBeginResult = StbTrueType.stbtt_PackBegin(packContext, pixelsPtr, atlasWidth, atlasHeight, atlasWidth, options.GlyphPadding, null);
+                if(packBeginResult == 0)
+                {
+                    throw new InvalidOperationException("Failed to initialize the font atlas.");
+                }
+
+                try
+                {
+                    PackRanges(fontInfo, packContext, GetCodePointRanges(options), options.PixelHeight, glyphRects, glyphInfos, glyphIndices);
+                }
+                finally
+                {
+                    StbTrueType.stbtt_PackEnd(packContext);
+                }
+            }
+
+            return new TGuiFontAtlas(
+                (int)MathF.Round(options.PixelHeight),
+                options.GlyphPadding,
+                atlasWidth,
+                atlasHeight,
+                alphaPixels,
+                glyphRects.ToArray(),
+                glyphInfos.ToArray(),
+                glyphIndices
+            );
+        }
+        finally
+        {
+            fontInfo.Dispose();
+        }
+    }
+
+    internal static IReadOnlyList<TGuiCodePointRange> GetCodePointRanges(TGuiFontAtlasOptions options)
+    {
+        if(options.CodePointRanges is not null)
+        {
+            return options.CodePointRanges;
+        }
+
+        return
+        [
+            new TGuiCodePointRange(BASIC_LATIN_START, BASIC_LATIN_END),
+            new TGuiCodePointRange(LATIN1_SUPPLEMENT_START, LATIN1_SUPPLEMENT_END)
+        ];
+    }
+
+    internal static unsafe void PackRanges(StbTrueType.stbtt_fontinfo fontInfo, StbTrueType.stbtt_pack_context packContext, IReadOnlyList<TGuiCodePointRange> codePointRanges, float fontPixelHeight, List<TGuiRectangle> glyphRects, List<TGuiGlyphInfo> glyphInfos, Dictionary<int, int> glyphIndices)
+    {
+        float baseLine = GetBaseline(fontInfo, fontPixelHeight);
+
+        for(int rangeIndex = 0; rangeIndex < codePointRanges.Count; rangeIndex++)
+        {
+            TGuiCodePointRange codePointRange = codePointRanges[rangeIndex];
+            PackRange(fontInfo, packContext, codePointRange.Start, codePointRange.End, fontPixelHeight, baseLine, glyphRects, glyphInfos, glyphIndices);
+        }
+    }
+
+    private static unsafe float GetBaseline(StbTrueType.stbtt_fontinfo fontInfo, float fontPixelHeight)
+    {
+        float scale = StbTrueType.stbtt_ScaleForPixelHeight(fontInfo, fontPixelHeight);
+        int ascent;
+        int descent;
+        int lineGap;
+        StbTrueType.stbtt_GetFontVMetrics(fontInfo, &ascent, &descent, &lineGap);
+        return ascent * scale;
+    }
+
+    
+}
+
+#endregion Text
